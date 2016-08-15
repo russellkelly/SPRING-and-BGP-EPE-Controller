@@ -1,3 +1,10 @@
+*********************************************************
+*	For MX currently the max label stack is 5	*
+*	therefore only configure 3 labels here. The	*
+*	other two labels will be the BGP NH and the	*
+*	EPE Label.					*
+*********************************************************
+
 ASBR=172.20.2.4
 SRPATH=800008 800005 800004
 
