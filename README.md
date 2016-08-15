@@ -14,7 +14,9 @@ Below is some detail of what each file does:
 
 app.py - Fires up a simple HTTP portal on port 5000 so one can post via the EXABGP API.
 
-ConfiguredEPEPeerList - This is a file you can amend before running the demo, it defines the list of peers used in the demo.  Note!! This can be all of the EPE enabled peers, or a subset of them.  Add them each in a new line with the format <peeraddress'x'>:<IP of Peers>
+ConfiguredEPEPeerList - This is a file you can amend before running the demo, it defines the list of peers used in the demo.  Note!! This can be all of the EPE enabled peers, or a subset of them.  Add them each in a new line with the format:
+
+<peeraddress'x'>:<IP of EPE Peer>
 
 exabgp-bgp-lu.conf - this is the configuration file for one of the exabgp processes.  Namely the process peering with the egress ASBR's and receiving the BGP family inet and labeled-unicast routes from the egress ASBR in JSON format.  It calls a script routes.sh (detailed below).  NOTE:  In this conf file you will have to ammend the BGP AS and Neighbor entries to fit your topology
 
