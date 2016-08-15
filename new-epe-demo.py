@@ -97,7 +97,7 @@ if __name__ == "__main__":
 	# store the original SIGINT handler
 	original_sigint = signal.getsignal(signal.SIGINT)
 	signal.signal(signal.SIGINT, exit_gracefully)
-	os.system("python /home/rbutme/getlabelsandserviceprefixes.py &")
+	os.system("python getlabelsandserviceprefixes.py &")
 	main()
 
 
