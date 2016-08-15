@@ -175,7 +175,7 @@ def check_and_add_route():
 			sleep(5)
 			if i == len(ConfiguredPeerList):
 				stdout.write('\n=========================================================================\n\n'"Man you ain't got nuthing going on no-how..."'\n'"Lets just keep rolling until you sort this out......")
-				stdout.write('\nStart a Global EPE Peer, Bro.....''\n''Or configure another in the Global Configured Peer List File ........''\nIn "/home/rbutme/ConfiguredEPEPeerList"\n\n\n=========================================================================\n\n\n')
+				stdout.write('\nStart a Global EPE Peer, Bro.....''\n''Or configure another in the Global Configured Peer List File ........''\nIn "ConfiguredEPEPeerList"\n\n\n=========================================================================\n\n\n')
 				stdout.flush()
 				check_and_add_route()
 		else:
@@ -233,7 +233,10 @@ def announce_withdraw_routes(i):
 
 
 def loadconfiguredEPEPeers():
-	f=open("/home/rbutme/ConfiguredEPEPeerList", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "ConfiguredEPEPeerList"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	f=open(abs_file_path, "r")
 	for line in f:
 		x = line.split(":")
 		a = x[0]
@@ -246,11 +249,14 @@ def loadconfiguredEPEPeers():
 	
 def loadPeerToASBRMap():
 	global PeerToASBRMap
-	g=open("/home/rbutme/PeerToASBRMapping", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "PeerToASBRMapping"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	g=open(abs_file_path, "r")
 	if PeerToASBRMap == {}:
 		g.close()
 		sleep(2)
-		g=open("/home/rbutme/PeerToASBRMapping", "r")
+		g=open(abs_file_path, "r")
 		for line in g:
 			x = line.split(":")
 			a = x[0]
@@ -280,11 +286,14 @@ def loadPeerToASBRMap():
 	
 def loadlabels():
 	global countlabel
-	f=open("/home/rbutme/PeerToLabelMapping", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "PeerToLabelMapping"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	f=open(abs_file_path, "r")
 	if labelmap == {}:
 		f.close()
 		sleep(2)
-		f=open("/home/rbutme/PeerToLabelMapping", "r")
+		f=open(abs_file_path, "r")
 		for line in f:
 			x = line.split(":")
 			a = x[0]
@@ -295,7 +304,7 @@ def loadlabels():
 		f.close()
 		check_and_add_route()
 	else:
-		f=open("/home/rbutme/PeerToLabelMapping", "r")
+		f=open(abs_file_path, "r")
 		for line in f:
 			x = line.split(":")
 			a = x[0]
@@ -308,11 +317,14 @@ def loadlabels():
 def loadserviceroutes():
 	global serviceroutesold
 	global serviceroutes
-	g=open("/home/rbutme/ServicePrefixes", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "ServicePrefixes"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	g=open(abs_file_path, "r")
 	if serviceroutes == {}:
 		g.close()
 		sleep(2)
-		g=open("/home/rbutme/ServicePrefixes", "r")
+		g=open(abs_file_path, "r")
 		for line in g:
 			x = line.split(":")
 			a = x[0]

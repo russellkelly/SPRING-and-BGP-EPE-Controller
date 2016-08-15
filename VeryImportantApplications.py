@@ -76,7 +76,10 @@ def add_more_specific_routes():
 	# Find the routes in Important Applications file that are actually active in a service prefix supernet
 
 	servicerouteslist = [y for x in serviceroutes.values() for y in x]
-	ImptApplicationsPrefixes = [line.strip() for line in open("/home/rbutme/VeryImptApplicationsPrefixes", 'r')]		
+	script_dir = os.path.dirname(__file__)
+	rel_path = "VeryImptApplicationsPrefixes"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	ImptApplicationsPrefixes = [line.strip() for line in open(abs_file_path, 'r')]		
 	ImptApplicationsIPSet = IPSet(ImptApplicationsPrefixes)
 	ImptApplicationsIPNetwork = list(ImptApplicationsIPSet.iter_cidrs())
 	serviceIPSet = IPSet(servicerouteslist)
@@ -275,7 +278,10 @@ def add_more_specific_routes():
 
 
 def loadconfiguredEPEPeers():
-	f=open("/home/rbutme/VeryImptApplicationsPeers", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "VeryImptApplicationsPeers"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	f = open(abs_file_path,'r')
 	for line in f:
 		x = line.split(":")
 		a = x[0]
@@ -286,12 +292,15 @@ def loadconfiguredEPEPeers():
 	f.close()
 	
 
-#Load the SR Paths in the file /home/rbutme/VeryImportantApplicationsSRPaths (See file for Format)
+#Load the SR Paths in the file VeryImportantApplicationsSRPaths (See file for Format)
 
 
 def loadVeryImportantApplicationsSRPaths():
 	global VeryImportantApplicationsSRPaths
-	with open('/home/rbutme/VeryImportantApplicationsSRPaths') as f_in:
+	script_dir = os.path.dirname(__file__)
+	rel_path = "VeryImportantApplicationsSRPaths"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	with open(abs_file_path) as f_in:
 		 data = list(line for line in (l.strip().split() for l in f_in) if line)
 	for d in data[0::1]:
 		h = d[0].split('=', 1)[-1]
@@ -316,11 +325,14 @@ def loadVeryImportantApplicationsSRPaths():
 
 def loadPeerToASBRMap():
 	global PeerToASBRMap
-	g=open("/home/rbutme/PeerToASBRMapping", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "PeerToASBRMapping"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	g=open(abs_file_path, "r")
 	if PeerToASBRMap == {}:
 		g.close()
 		sleep(2)
-		g=open("/home/rbutme/PeerToASBRMapping", "r")
+		g=open(abs_file_path, "r")
 		for line in g:
 			x = line.split(":")
 			a = x[0]
@@ -349,11 +361,14 @@ def loadPeerToASBRMap():
 	
 	
 def loadlabels():
-	f=open("/home/rbutme/PeerToLabelMapping", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "PeerToLabelMapping"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	f=open(abs_file_path, "r")
 	if labelmap == {}:
 		f.close()
 		sleep(2)
-		f=open("/home/rbutme/PeerToLabelMapping", "r")
+		f=open(abs_file_path, "r")
 		for line in f:
 			x = line.split(":")
 			a = x[0]
@@ -364,7 +379,7 @@ def loadlabels():
 		f.close()
 		add_more_specific_routes()
 	else:
-		f=open("/home/rbutme/PeerToLabelMapping", "r")
+		f=open(abs_file_path, "r")
 		for line in f:
 			x = line.split(":")
 			a = x[0]
@@ -377,11 +392,14 @@ def loadlabels():
 def loadserviceroutes():
 	global serviceroutesold
 	global serviceroutes
-	g=open("/home/rbutme/ServicePrefixes", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "ServicePrefixes"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	g=open(abs_file_path, "r")
 	if serviceroutes == {}:
 		g.close()
 		sleep(2)
-		g=open("/home/rbutme/ServicePrefixes", "r")
+		g=open(abs_file_path, "r")
 		for line in g:
 			x = line.split(":")
 			a = x[0]
@@ -416,7 +434,10 @@ def loadserviceroutes():
 
 def main():
 	global CurrentIValue
-	f = open('/home/rbutme/VeryImptApplicationsPeers','w') #Clear the file or Create the file if it doesn't exist
+	script_dir = os.path.dirname(__file__)
+	rel_path = "VeryImptApplicationsPeers"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	f = open(abs_file_path,'w') #Clear the file or Create the file if it doesn't exist
 	f.close()
 	loadconfiguredEPEPeers()
 	CurrentIValue = 0
@@ -429,7 +450,7 @@ def main():
 	m = raw_input("Make your selection.........:  ")
 	if m == "1":
 		print ('\n====================================================================================================\n\n	All Right Lets Get the Information for the Two EPE Peers For This Part!!\n\nNote:  We can take as many peers as there are active! We have just limited to 2 for this test.....\n')
-		print ('Make Sure you have added your Important Applications specific prefixes to the file:\n''......"/home/rbutme/ImptApplicationsPrefixes".....!!!\n\n====================================================================================================\n\n')
+		print ('Make Sure you have added your Important Applications specific prefixes to the file:\n''......"VeryImptApplicationsPrefixes".....!!!\n\n====================================================================================================\n\n')
 		pass
 	elif m == "q":
 		print ("\n\nLater Gators........\n\n\n")
@@ -439,7 +460,10 @@ def main():
 		print("\n\n\nCome on!!! 1,2,3 or q only.......:  \n\n")
 		sleep(1)
 		main()
-	g=open("/home/rbutme/PeerToASBRMapping", "r")
+	script_dir = os.path.dirname(__file__)
+	rel_path = "PeerToASBRMapping"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	g=open(abs_file_path, "r")
 	PeerToASBRMap = {}
 	for line in g:
 		x = line.split(":")
@@ -463,7 +487,10 @@ def main():
 	n1="peer_address1"
 	m1=raw_input("\nEnter the IP Address of the Secondary Peer for your VERY Important Applications: ")
 	UserEnteredInformation[n1]=m1
-	with open("/home/rbutme/VeryImptApplicationsPeers", 'w') as f:
+	script_dir = os.path.dirname(__file__)
+	rel_path = "VeryImptApplicationsPeers"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	with open(abs_file_path, 'w') as f:
 		for key, value in UserEnteredInformation.items():
 			f.write('%s:%s\n' % (key, value))
 	f.close()
