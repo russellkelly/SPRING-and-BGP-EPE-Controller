@@ -4,6 +4,10 @@ A Python Based SPRING and BGP Route Controller focused on the EPE use case.
 
 To run the demo install EXABGP (version 3.4.16) along with Python 2.7.
 
+For details on installing EXABGP refer to this link:
+
+https://github.com/Exa-Networks/exabgp
+
 All files should be located in the same directory of your choice.
 
 Below is some detail of what each file does:
