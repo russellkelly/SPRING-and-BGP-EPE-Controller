@@ -25,11 +25,8 @@ serviceroutesold = dict()
 UserEnteredInformation = dict()
 ImportantApplicationsSRPath = []
 ImportantApplicationsSRPathOld = []
-
 CurrentPeer = 0
 CurrentIValue = 0
-
-
 
 def exit_gracefully(signum, frame):
 	global CurrentIValue
@@ -44,7 +41,7 @@ def exit_gracefully(signum, frame):
 		print('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(CurrentIValue)])][0])+' label [800000]')
 		v += 1	
 	print('\n\n========================================================================================\n\n\n')
-	sleep(1)
+	sleep(2)
 	main()
 	# restore the exit gracefully handler here    
 	signal.signal(signal.SIGINT, exit_gracefully)
@@ -70,19 +67,44 @@ def add_more_specific_routes():
 	loadserviceroutes()
 	loadPeerToASBRMap()
 	loadconfiguredEPEPeers()
-	FindActiveServicePrefixes()
 
+	
+	
+	# Find the routes in Important Applications file that are actually active in a service prefix supernet
 
-	CurrentPeer = 0
+	servicerouteslist = [y for x in serviceroutes.values() for y in x]
+	script_dir = os.path.dirname(__file__)
+	rel_path = "ImptApplicationsPrefixes"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	ImptApplicationsPrefixes = [line.strip() for line in open(abs_file_path, 'r')]		
+	ImptApplicationsIPSet = IPSet(ImptApplicationsPrefixes)
+	ImptApplicationsIPNetwork = list(ImptApplicationsIPSet.iter_cidrs())
+	serviceIPSet = IPSet(servicerouteslist)
+	serviceIPNetwork = list(serviceIPSet.iter_cidrs())
+	ActiveImptApplicationsPrefixesOld = copy.deepcopy(ActiveImptApplicationsPrefixes)
+	
+	# Result Stored in 	ActiveimportantPrefixes
+	
+	ActiveImptApplicationsPrefixes = []	
+	v = 0	
+	for line in ImptApplicationsIPNetwork:
+		if ImptApplicationsIPNetwork[v] in serviceIPSet:
+			ActiveImptApplicationsPrefixes.append(str(ImptApplicationsIPNetwork[v]))
+		else:	
+			pass
+		v +=1	
+
+	# OK Lets run the program to advertise this stuff
 	i = 0
-	ImportantApplicationsSRPath = labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]
-	while ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys():
-		for i in range(0,len(ImptApplicationsConfiguredPeerList.keys())):
-			if ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]] is not '0' or None or 0:
-				print('\n====================================================================================================\n\n''Here is the pertinent Important Application run-time information\n')
-				print(ActiveImptApplicationsPrefixes)
-				print(ImptApplicationsConfiguredPeerList)
-				print('\n====================================================================================================\n\n')
+	ImportantApplicationsSRPath = labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]] 
+	for i in range(0,len(ImptApplicationsConfiguredPeerList.keys())):
+		if ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]] is not '0' or None or 0:
+			print('\n====================================================================================================\n\n''Here is the pertinent Important Application run-time information\n')
+			print(ActiveImptApplicationsPrefixes)
+			print(ImptApplicationsConfiguredPeerList)
+			print('\n====================================================================================================\n\n')
+			sleep(5)
+			while ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]] is not '0' or None or 0:
 				print ('\n=================================================================================\n\n' 'Saving the Label (BGP-LU) for  ' + str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]) + ' address!!! --->> LABEL:' +str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]])+ '\n')
 				servicerouteslist = [y for x in serviceroutes.values() for y in x]
 				servicerouteslistold = [y for x in serviceroutesold.values() for y in x]
@@ -148,27 +170,83 @@ def add_more_specific_routes():
 				CurrentPeer = ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]
 				CurrentIValue = i
 				ImportantApplicationsSRPathOld = copy.deepcopy(ImportantApplicationsSRPath)
-				loadlabels()
-				loadserviceroutes()
-				loadPeerToASBRMap()
-				loadconfiguredEPEPeers()
-				FindActiveServicePrefixes()
-				sleep(2)
-				break
-			elif ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]] == '0' and i < int(len(ImptApplicationsConfiguredPeerList.keys()) - 1):
-				i += 1
-				
-			elif ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] not in labelmap.keys():
-				i += 1
-				sleep(5)
-				if i == len(ImptApplicationsConfiguredPeerList):
-					print('\n========================================================================================\n\n'"Man you ain't got nuthing going on no-how..."'\n'"Lets just keep rolling until you sort this out......")
-					print('\n''Start a configured EPE Peer for this Customer, Bro.....''\n''Or start again and Enter Correctly........''\n\n\n========================================================================================\n\n\n')
-					ImportantApplicationsSRPathOld = 0
-					FindActiveServicePrefixes()
+				add_more_specific_routes()
+		elif ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]] == '0':
+			print('\n====================================================================================================\n\n''Here is the pertinent Important Application run-time information\n')
+			print(ActiveImptApplicationsPrefixes)
+			print(ImptApplicationsConfiguredPeerList)
+			print('\n====================================================================================================\n\n')
+			sleep(5)
+			for j in range(0,len(ImptApplicationsConfiguredPeerList.keys())):
+				while ImptApplicationsConfiguredPeerList['peer_address'+ str(j)] in labelmap.keys() and labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]] != '0':
+					print ('\n=================================================================================\n\n' 'Saving the Label (BGP-LU) for  ' + str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]) + ' address!!! --->> LABEL:' +str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]])+ '\n')
+					servicerouteslist = [y for x in serviceroutes.values() for y in x]
+					servicerouteslistold = [y for x in serviceroutesold.values() for y in x]
+					if len(ActiveImptApplicationsPrefixesOld) == len(ActiveImptApplicationsPrefixes) and cmp(ActiveImptApplicationsPrefixes, ActiveImptApplicationsPrefixesOld) == 0 and CurrentPeer == ImptApplicationsConfiguredPeerList['peer_address'+ str(j)] and ImportantApplicationsSRPath == ImportantApplicationsSRPathOld:
+						print("No Change in the Route Table, still using Peer "  + str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]) +  "\nOn Egress ASBR "+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' with label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')
+						pass
+					elif CurrentPeer != ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]:
+						v = 0
+						print("Advertising all current Important Applications' routes For new EPE Peer's ASBR"'\n')
+						print("Current Prefixes Are: ")
+						for route in ActiveImptApplicationsPrefixes:
+							print(str(route) + ' ')
+						for route in ActiveImptApplicationsPrefixes:
+							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')})
+							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
+							print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')
+							v += 1
+					elif ImportantApplicationsSRPath != ImportantApplicationsSRPathOld:
+						v = 0
+						print("Advertising all current Important Applications' routes For new EPE Peer's ASBR"'\n')
+						print("Current Prefixes Are: ")
+						for route in ActiveImptApplicationsPrefixes:
+							print(str(route) + ' ')
+						for route in ActiveImptApplicationsPrefixes:
+							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')})
+							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
+							print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')
+							v += 1	
+					elif len(ActiveImptApplicationsPrefixesOld) == 0 and len(ActiveImptApplicationsPrefixes) >= 0:
+						v = 0
+						print("Advertising the following newly learned Important Application routes from Egress ASBR: ")
+						for route in ActiveImptApplicationsPrefixes:
+							if route not in ActiveImptApplicationsPrefixesOld:
+								print(str(route) +' ')
+							if route not in ActiveImptApplicationsPrefixesOld:
+								r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')})
+								sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
+								print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')
+							v += 1
+					elif len(ActiveImptApplicationsPrefixesOld) >= len(ActiveImptApplicationsPrefixes):
+						v = 0
+						print("Removing the following Important Application routes no longer Advertised by Egress ASBR's: ")
+						for route in ActiveImptApplicationsPrefixesOld:
+							if route not in ActiveImptApplicationsPrefixes:
+								print(str(route) +' ')
+							if route not in ActiveImptApplicationsPrefixes:
+								r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [800000]')})
+								sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
+								print('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [800000]')
+							v += 1
+					elif len(ActiveImptApplicationsPrefixesOld) <= len(ActiveImptApplicationsPrefixes):
+						v = 0
+						print("Advertising the following newly learned Important Applications' routes from Egress ASBR's: ")
+						for route in ActiveImptApplicationsPrefixes:
+							if route not in ActiveImptApplicationsPrefixesOld:
+								print(str(route) +'\n')
+							if route not in ActiveImptApplicationsPrefixesOld:
+								r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')})
+								sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
+								print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(j)])][0])+' [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]]) + ']')
+							v += 1
+					print('\n\n================================================================================================\n\n\n')
+					CurrentPeer = ImptApplicationsConfiguredPeerList['peer_address'+ str(j)]
+					CurrentIValue = j
+					ImportantApplicationsSRPathOld = copy.deepcopy(ImportantApplicationsSRPath)
 					add_more_specific_routes()
 			else:
-				print('\n========================================================================================\n\n		All defined EPE Peers For Important Applications Are Idle.\n			Lets just remove the EPE Routes\n\n')
+				print('\n========================================================================================\n\n			All defined EPE Peers For Important Applications Are Idle.\n			Lets just remove the EPE Routes\n\n')
 				v = 0
 				for route in ActiveImptApplicationsPrefixes:
 					r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]')})
@@ -179,45 +257,17 @@ def add_more_specific_routes():
 				sleep(5)
 				CurrentIValue = i
 				ImportantApplicationsSRPathOld = 0
-				loadlabels()
-				loadserviceroutes()
-				loadPeerToASBRMap()
-				loadconfiguredEPEPeers()
-				FindActiveServicePrefixes()
-
-
-
-
-
-# Find the routes in Important Applications file that are actually active in a service prefix supernet
-	
-def FindActiveServicePrefixes():
-	global ActiveImptApplicationsPrefixesOld
-	global ActiveImptApplicationsPrefixes
-	global serviceroutes
-	servicerouteslist = [y for x in serviceroutes.values() for y in x]
-	script_dir = os.path.dirname(__file__)
-	rel_path = "ImptApplicationsPrefixes"
-	abs_file_path = os.path.join(script_dir, rel_path)
-	f = open(abs_file_path,'r')
-	ImptApplicationsPrefixes = [line.strip() for line in f]		
-	ImptApplicationsIPSet = IPSet(ImptApplicationsPrefixes)
-	ImptApplicationsIPNetwork = list(ImptApplicationsIPSet.iter_cidrs())
-	serviceIPSet = IPSet(servicerouteslist)
-	serviceIPNetwork = list(serviceIPSet.iter_cidrs())
-	ActiveImptApplicationsPrefixesOld = copy.deepcopy(ActiveImptApplicationsPrefixes)
-	f.close()
-	
-	# Result Stored in 	ActiveimportantPrefixes
-	
-	ActiveImptApplicationsPrefixes = []	
-	v = 0	
-	for line in ImptApplicationsIPNetwork:
-		if ImptApplicationsIPNetwork[v] in serviceIPSet:
-			ActiveImptApplicationsPrefixes.append(str(ImptApplicationsIPNetwork[v]))
-		else:	
-			pass
-		v +=1	
+				add_more_specific_routes()
+		elif ImptApplicationsConfiguredPeerList['peer_address'+ str(i)] not in labelmap.keys():
+			i += 1
+			sleep(5)
+			if i == len(ImptApplicationsConfiguredPeerList):
+				print('\n========================================================================================\n\n'"Man you ain't got nuthing going on no-how..."'\n'"Lets just keep rolling until you sort this out......")
+				print('\n''Start a configured EPE Peer for this Customer, Bro.....''\n''Or start again and Enter Correctly........''\n\n\n========================================================================================\n\n\n')
+				ImportantApplicationsSRPathOld = 0
+				add_more_specific_routes()
+		else:
+			sleep(1)
 
 
 
