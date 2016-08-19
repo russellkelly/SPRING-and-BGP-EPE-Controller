@@ -19,7 +19,7 @@ ConfiguredPeerList = {}
 PeerToASBRMap = {}
 serviceroutes = dict()
 serviceroutesold = dict()
-CurrentPeer = 0
+
 
 
 
@@ -27,19 +27,24 @@ def check_and_add_route():
 	global serviceroutes
 	global serviceroutesold
 	global CurrentPeer
+	
+
+#Load the labels, the service routes, peers and ASBR Mappings
+
+
 	loadlabels()
 	loadPeerToASBRMap()
 	loadserviceroutes()
 	i = 0
-	for i in range(0,len(ConfiguredPeerList.keys())):
-		if ConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ConfiguredPeerList['peer_address'+ str(i)]] is not '0' or None or 0:
-			print('\n====================================================================================================\n\n''Here is the pertinent run-time information\n')
-			print(labelmap)
-			print(serviceroutes)
-			print(ConfiguredPeerList)
-			print('\n====================================================================================================\n\n')
-			sleep(5)
-			while ConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ConfiguredPeerList['peer_address'+ str(i)]] is not '0' or None or 0:
+	CurrentPeer = 0
+	while ConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys():
+		for i in range(0,len(ConfiguredPeerList.keys())):
+			if ConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ConfiguredPeerList['peer_address'+ str(i)]] is not '0' or None or 0:
+				print('\n====================================================================================================\n\n''Here is the pertinent run-time information\n')
+				print(labelmap)
+				print(serviceroutes)
+				print(ConfiguredPeerList)
+				print('\n====================================================================================================\n\n')	
 				print ('\n=================================================================================\n\n' 'Using this EPE Peer Currently ' + str(ConfiguredPeerList['peer_address'+ str(i)]) + ' address!!! --->> LABEL:' +str(labelmap[ConfiguredPeerList['peer_address'+ str(i)]])+ '\n')
 				servicerouteslist = [y for x in serviceroutes.values() for y in x]
 				servicerouteslistold = [y for x in serviceroutesold.values() for y in x]
@@ -93,71 +98,21 @@ def check_and_add_route():
 				print('\n\n=================================================================================\n\n\n')
 				stdout.flush()
 				CurrentPeer = ConfiguredPeerList['peer_address'+ str(i)]
-				check_and_add_route()
-		elif ConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ConfiguredPeerList['peer_address'+ str(i)]] == '0':
-			print('\n====================================================================================================\n\n''Here is the pertinent run-time information\n')
-			print(labelmap)
-			print(serviceroutes)
-			print(ConfiguredPeerList)
-			print('\n====================================================================================================\n\n')
-			sleep(5)
-			for j in range(0,len(ConfiguredPeerList.keys())):
-				while ConfiguredPeerList['peer_address'+ str(j)]  in labelmap.keys() and labelmap[ConfiguredPeerList['peer_address'+ str(j)]] != '0':
-					print ('\n=================================================================================\n\n' 'Using this EPE Peer Currently ' + str(ConfiguredPeerList['peer_address'+ str(j)]) + ' address!!! --->> LABEL:' +str(labelmap[ConfiguredPeerList['peer_address'+ str(j)]])+ '\n')
-					servicerouteslist = [y for x in serviceroutes.values() for y in x]
-					servicerouteslistold = [y for x in serviceroutesold.values() for y in x]
-					if len(servicerouteslistold) == len(servicerouteslist) and cmp(serviceroutes, serviceroutesold) == 0 and CurrentPeer == ConfiguredPeerList['peer_address'+ str(j)]:
-						print("No Change in the Route Table, still using Peer "  + str(ConfiguredPeerList['peer_address'+ str(j)]) +  "\nOn Egress ASBR "+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(j)])][0])+' with label [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(j)]]) + ']')
-						pass
-					elif CurrentPeer != ConfiguredPeerList['peer_address'+ str(j)] :
-						servicerouteslist = [y for x in serviceroutes.values() for y in x]
-						servicerouteslistold = [y for x in serviceroutesold.values() for y in x]
-						print("Advertising all current routes "'\n')
-						print("Current Prefixes Are: ")
-						v = 0
-						for route in servicerouteslist:
-							print(str(route) +' ')
-						print('\n')
-						for route in servicerouteslist:
-							stdout.write('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(j)]]) + ']''\n')
-							stdout.flush()	
-							v += 1
-					elif len(servicerouteslistold) == 0 and len(servicerouteslist) >= 0:
-						v = 0
-						print("Advertising the following newly learned routes from Egress ASBR's: ")
-						for route in servicerouteslist:
-							if route not in servicerouteslistold:
-								print(str(route) +' ')
-							print('\n')	
-							if route not in servicerouteslistold:
-								stdout.write('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(j)]]) + ']''\n')
-								stdout.flush()		
-							v += 1	
-					elif len(servicerouteslistold) >= len(servicerouteslist):
-						v = 0
-						print("Removing the following routes no longer Advertised by Egress ASBR's: ")
-						for route in servicerouteslistold:
-							if route not in servicerouteslist:
-								print(str(route) +' ')
-							print('\n')
-							if route not in servicerouteslist:
-								stdout.write('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(j)])][0])+' label [800000]''\n')
-								stdout.flush()	
-							v += 1
-					elif len(servicerouteslistold) <= len(servicerouteslist):
-						v = 0
-						print("Advertising the following newly learned routes from Egress ASBR's: ")
-						for route in servicerouteslist:
-							if route not in servicerouteslistold:
-								print(str(route) +' ')
-							print('\n')
-							if route not in servicerouteslistold:
-								stdout.write('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(j)])][0])+' label [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(j)]]) + ']''\n')
-								stdout.flush()	
-							v += 1
-					print('\n\n=================================================================================\n\n\n')
+				loadlabels()
+				loadPeerToASBRMap()
+				loadserviceroutes()
+				sleep(5)
+				break
+			elif ConfiguredPeerList['peer_address'+ str(i)] in labelmap.keys() and labelmap[ConfiguredPeerList['peer_address'+ str(i)]] == '0' and i < int(len(ConfiguredPeerList.keys()) - 1) :
+				i += 1
+				
+			elif ConfiguredPeerList['peer_address'+ str(i)] not in labelmap.keys():
+				i += 1
+				sleep(5)
+				if i == len(ConfiguredPeerList):
+					stdout.write('\n=========================================================================\n\n'"Man you ain't got nuthing going on no-how..."'\n'"Lets just keep rolling until you sort this out......")
+					stdout.write('\nStart a Global EPE Peer, Bro.....''\n''Or configure another in the Global Configured Peer List File ........''\nIn "ConfiguredEPEPeerList"\n\n\n=========================================================================\n\n\n')
 					stdout.flush()
-					CurrentPeer = ConfiguredPeerList['peer_address'+ str(j)]
 					check_and_add_route()
 			else:
 				servicerouteslist = [y for x in serviceroutes.values() for y in x]
@@ -169,67 +124,9 @@ def check_and_add_route():
 				stdout.write('\n\n========================================================================================\n\n\n')
 				stdout.flush()
 				sleep(5)
-				check_and_add_route()
-		elif ConfiguredPeerList['peer_address'+ str(i)] not in labelmap.keys():
-			i += 1
-			sleep(5)
-			if i == len(ConfiguredPeerList):
-				stdout.write('\n=========================================================================\n\n'"Man you ain't got nuthing going on no-how..."'\n'"Lets just keep rolling until you sort this out......")
-				stdout.write('\nStart a Global EPE Peer, Bro.....''\n''Or configure another in the Global Configured Peer List File ........''\nIn "ConfiguredEPEPeerList"\n\n\n=========================================================================\n\n\n')
-				stdout.flush()
-				check_and_add_route()
-		else:
-			sleep(1)
-
-
-
-
-
-	
-
-def announce_withdraw_routes(i):
-	global serviceroutesold
-	global serviceroutes
-	servicerouteslist = [y for x in serviceroutes.values() for y in x]
-	servicerouteslistold = [y for x in serviceroutesold.values() for y in x]
-	print ('\n=================================================================================\n\n' 'Using this EPE Peer Currently ' + str(ConfiguredPeerList['peer_address'+ str(i)]) + ' address!!! --->> LABEL:' +str(labelmap[ConfiguredPeerList['peer_address'+ str(i)]])+ '\n')
-	if len(servicerouteslistold) == 0 and len(servicerouteslist) >= 0:
-		v = 0
-		print("Advertising the following newly learned routes from Egress ASBR's: ")
-		for route in servicerouteslist:
-			if route not in servicerouteslistold:
-				print(str(route) +' ')
-			print('\n')	
-			if route not in servicerouteslistold:
-				r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(i)]]) + ']''\n')})
-				print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(i)]]) + ']''\n')
-			v += 1	
-	elif len(servicerouteslistold) >= len(servicerouteslist):
-		v = 0
-		print("Removing the following routes no longer Advertised by Egress ASBR's: ")
-		for route in servicerouteslistold:
-			if route not in servicerouteslist:
-				print(str(route) +' ')
-			print('\n')
-			if route not in servicerouteslist:
-				r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]''\n')})
-				print('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]''\n')
-			v += 1
-	elif len(servicerouteslistold) <= len(servicerouteslist):
-		v = 0
-		print("Advertising the following newly learned routes from Egress ASBR's: ")
-		for route in servicerouteslist:
-			if route not in servicerouteslistold:
-				print(str(route) +' ')
-			print('\n')
-			if route not in servicerouteslistold:
-				r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(i)]]) + ']''\n')})
-				print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ConfiguredPeerList['peer_address'+ str(i)])][0])+' [' + str(labelmap[ConfiguredPeerList['peer_address'+ str(i)]]) + ']''\n')
-			v += 1
-	print('\n\n=================================================================================\n\n\n')
-	check_and_add_route()
-
-
+				loadlabels()
+				loadPeerToASBRMap()
+				loadserviceroutes()
 
 
 def loadconfiguredEPEPeers():
