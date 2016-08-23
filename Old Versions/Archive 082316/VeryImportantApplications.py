@@ -13,7 +13,6 @@ import subprocess
 import signal
 import requests
 from netaddr import *
-import yaml
 		
 
 labelmap = {}
@@ -34,14 +33,13 @@ CurrentIValue = 0
 
 def exit_gracefully(signum, frame):
 	global CurrentIValue
-	controller_ip = GetControllerIP()
 	# restore the original signal handler as otherwise evil things will happen
 	# in raw_input when CTRL+C is pressed, and our signal handler is not re-entrant
 	signal.signal(signal.SIGINT, original_sigint)
 	print('\n========================================================================================\n\n			OK Bye.....Lets just remove the EPE Routes\n\n')
 	v = 0
 	for route in ActiveImptApplicationsPrefixes:
-		r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(CurrentIValue)])][0])+' label [800000]')})
+		r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(CurrentIValue)])][0])+' label [800000]')})
 		sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 		print('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(CurrentIValue)])][0])+' label [800000]')
 		v += 1	
@@ -67,13 +65,12 @@ def add_more_specific_routes():
 
 	#Load the labels, the service routes, peers and ASBR Mappings
 	loadlabels()
-	VeryImportantApplicationsSRPaths = {}
-	VeryImportantApplicationsSRPaths = loadVeryImportantApplicationsSRPaths()
+	loadVeryImportantApplicationsSRPaths()
 	loadserviceroutes()
 	loadPeerToASBRMap()
 	loadconfiguredEPEPeers()
 	FindActiveServicePrefixes()
-	controller_ip = GetControllerIP()
+	
 	
 	# OK Lets run the program to advertise this stuff
 	CurrentPeer = 0
@@ -84,7 +81,7 @@ def add_more_specific_routes():
 				print('\n====================================================================================================\n\n''Here is the pertinent Important Application run-time information\n')
 				print(ActiveImptApplicationsPrefixes)
 				print(ImptApplicationsConfiguredPeerList)
-				print("Here is the SR Path we're using: [" + str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +']')
+				print("Here is the SR Path we're using: " + str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +']')
 				print('\n====================================================================================================\n\n')
 				print ('\n====================================================================================================\n\n' 'Saving the Label (BGP-LU) for  ' + str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]) + ' address!!! --->> LABEL:' +str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]])+ '\n')
 				servicerouteslist = [y for x in serviceroutes.values() for y in x]
@@ -99,9 +96,9 @@ def add_more_specific_routes():
 					for route in ActiveImptApplicationsPrefixes:
 						print(str(route) + ' ')
 					for route in ActiveImptApplicationsPrefixes:
-						r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +  ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+						r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 						sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
-						print('announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
+						print('announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1
 				elif VeryImportantApplicationsSRPathsOld != VeryImportantApplicationsSRPaths:
 					v = 0
@@ -110,9 +107,9 @@ def add_more_specific_routes():
 					for route in ActiveImptApplicationsPrefixes:
 						print(str(route) + ' ')
 					for route in ActiveImptApplicationsPrefixes:
-						r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +  ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+						r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 						sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
-						print('announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +  ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
+						print('announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1				
 				elif len(ActiveImptApplicationsPrefixesOld) == 0 and len(ActiveImptApplicationsPrefixes) >= 0:
 					v = 0
@@ -121,9 +118,9 @@ def add_more_specific_routes():
 						if route not in ActiveImptApplicationsPrefixesOld:
 							print(str(route) +' ')
 						if route not in ActiveImptApplicationsPrefixesOld:
-							r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +  ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
-							print('announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +  ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
+							print('announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1
 				elif len(ActiveImptApplicationsPrefixesOld) >= len(ActiveImptApplicationsPrefixes):
 					v = 0
@@ -132,8 +129,8 @@ def add_more_specific_routes():
 						if route not in ActiveImptApplicationsPrefixes:
 							print(str(route) +' ')
 						if route not in ActiveImptApplicationsPrefixes:
-							r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop 172.20.2.3 label [800000]')})
-							print('withdraw route ' + str(route) +' next-hop 172.20.2.3 label [800000]')
+							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop 172.20.2.2 label [800000]')})
+							print('withdraw route ' + str(route) +' next-hop 172.20.2.2 label [800000]')
 							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 						v += 1
 				elif len(ActiveImptApplicationsPrefixesOld) <= len(ActiveImptApplicationsPrefixes):
@@ -143,17 +140,16 @@ def add_more_specific_routes():
 						if route not in ActiveImptApplicationsPrefixesOld:
 							print(str(route) +'\n')
 						if route not in ActiveImptApplicationsPrefixesOld:
-							r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +  ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
-							print('announce route ' + str(route) +' next-hop 172.20.2.3 label ['+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) +  ' ' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
+							print('announce route ' + str(route) +' next-hop 172.20.2.2 label '+ str(VeryImportantApplicationsSRPaths[str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])]) + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1
 				print('\n\n================================================================================================\n\n\n')
 				CurrentPeer = ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]
 				CurrentIValue = i
 				VeryImportantApplicationsSRPathsOld = copy.deepcopy(VeryImportantApplicationsSRPaths)
 				loadlabels()
-				VeryImportantApplicationsSRPaths = {}
-				VeryImportantApplicationsSRPaths = loadVeryImportantApplicationsSRPaths()
+				loadVeryImportantApplicationsSRPaths()
 				loadserviceroutes()
 				loadPeerToASBRMap()
 				loadconfiguredEPEPeers()
@@ -176,16 +172,15 @@ def add_more_specific_routes():
 				print('\n========================================================================================\n\n		All defined EPE Peers For Important Applications Are Idle.\n			Lets just remove the EPE Routes\n\n')
 				v = 0
 				for route in ActiveImptApplicationsPrefixes:
-					r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop 172.20.2.3 label [800000]')})
-					print('withdraw route ' + str(route) +' next-hop 172.20.2.3 label [800000]')
+					r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop 172.20.2.2 label [800000]')})
+					print('withdraw route ' + str(route) +' next-hop 172.20.2.2 label [800000]')
 					sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 					v += 1	
 				print('\n\n========================================================================================\n\n\n')
 				CurrentIValue = i
 				VeryImportantApplicationsSRPathsOld = {}
 				loadlabels()
-				VeryImportantApplicationsSRPaths = {}
-				VeryImportantApplicationsSRPaths = loadVeryImportantApplicationsSRPaths()
+				loadVeryImportantApplicationsSRPaths()
 				loadserviceroutes()
 				loadPeerToASBRMap()
 				loadconfiguredEPEPeers()
@@ -194,17 +189,6 @@ def add_more_specific_routes():
 				sleep(5)
 
 
-# Get the controller IP from the TopologyVariable YAML FIle
-
-def GetControllerIP():
-	script_dir = os.path.dirname(__file__)
-	rel_path = "TopologyVariables.yaml"
-	abs_file_path = os.path.join(script_dir, rel_path)
-	file=open(abs_file_path)
-	topo_vars = yaml.load(file.read())
-	file.close()
-	controller_ip = topo_vars['exabgp']['ip_address']
-	return controller_ip
 
 
 def loadconfiguredEPEPeers():
@@ -230,16 +214,16 @@ def FindActiveServicePrefixes():
 	global serviceroutes
 	servicerouteslist = [y for x in serviceroutes.values() for y in x]
 	script_dir = os.path.dirname(__file__)
-	rel_path = "RuntimeVariables.yaml"
+	rel_path = "VeryImptApplicationsPrefixes"
 	abs_file_path = os.path.join(script_dir, rel_path)
 	f = open(abs_file_path,'r')
-	RuntimeVariables = yaml.load(f.read())
-	ImptApplicationsPrefixes = RuntimeVariables['VeryImptApplicationsPrefixes']		
+	ImptApplicationsPrefixes = [line.strip() for line in f]		
 	ImptApplicationsIPSet = IPSet(ImptApplicationsPrefixes)
 	ImptApplicationsIPNetwork = list(ImptApplicationsIPSet.iter_cidrs())
 	serviceIPSet = IPSet(servicerouteslist)
 	serviceIPNetwork = list(serviceIPSet.iter_cidrs())
 	ActiveImptApplicationsPrefixesOld = copy.deepcopy(ActiveImptApplicationsPrefixes)
+	f.close()
 	
 	# Result Stored in 	ActiveimportantPrefixes
 	
@@ -257,14 +241,30 @@ def FindActiveServicePrefixes():
 
 
 def loadVeryImportantApplicationsSRPaths():
+	global VeryImportantApplicationsSRPaths
 	script_dir = os.path.dirname(__file__)
-	rel_path = "RuntimeVariables.yaml"
+	rel_path = "VeryImportantApplicationsSRPaths"
 	abs_file_path = os.path.join(script_dir, rel_path)
-	f = open(abs_file_path,'r')
-	RuntimeVariables = yaml.load(f.read())
-	VeryImportantApplicationsSRPaths = copy.deepcopy(RuntimeVariables['VeryImportantApplicationsSRPaths'])
-	f.close()
-	return VeryImportantApplicationsSRPaths
+	with open(abs_file_path) as f_in:
+		 data = list(line for line in (l.strip().split() for l in f_in) if line)
+	for d in data[0::1]:
+		h = d[0].split('=', 1)[-1]
+		d[0] = d[0].replace(d[0],h)
+	keys = []
+	for line in data[0::2]:
+		temp  =  ''.join(line)
+		keys.append(temp)
+	values = []	
+	for line in data[1::2]:
+		temp1  =  ' '.join(line)
+		temp2 = "[" + temp1 +' '
+		values.append(temp2)
+	i = iter(keys)
+	j = iter(values)
+	k = list(zip(i, j))
+	VeryImportantApplicationsSRPaths = {}
+	for (x,y) in k:
+		VeryImportantApplicationsSRPaths[x] = y
 
 
 
@@ -402,7 +402,7 @@ def main():
 		sleep(1)
 		exit(0)
 	else:
-		print("\n\n\nCome on!!! 1 or q only.......:  \n\n")
+		print("\n\n\nCome on!!! 1,2,3 or q only.......:  \n\n")
 		sleep(0.5)
 		main()
 	script_dir = os.path.dirname(__file__)

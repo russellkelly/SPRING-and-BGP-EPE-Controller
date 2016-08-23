@@ -13,6 +13,7 @@ import subprocess
 import signal
 import requests
 from netaddr import *
+import yaml
 		
 
 labelmap = {}
@@ -33,13 +34,14 @@ CurrentIValue = 0
 
 def exit_gracefully(signum, frame):
 	global CurrentIValue
+	controller_ip = GetControllerIP()
 	# restore the original signal handler as otherwise evil things will happen
 	# in raw_input when CTRL+C is pressed, and our signal handler is not re-entrant
 	signal.signal(signal.SIGINT, original_sigint)
 	print('\n========================================================================================\n\n			OK Bye.....Lets just remove the EPE Routes\n\n')
 	v = 0
 	for route in ActiveImptApplicationsPrefixes:
-		r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(CurrentIValue)])][0])+' label [800000]')})
+		r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(CurrentIValue)])][0])+' label [800000]')})
 		sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 		print('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(CurrentIValue)])][0])+' label [800000]')
 		v += 1	
@@ -71,8 +73,7 @@ def add_more_specific_routes():
 	loadPeerToASBRMap()
 	loadconfiguredEPEPeers()
 	FindActiveServicePrefixes()
-
-
+	controller_ip = GetControllerIP()
 	CurrentPeer = 0
 	i = 0
 	ImportantApplicationsSRPath = labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]
@@ -96,7 +97,7 @@ def add_more_specific_routes():
 					for route in ActiveImptApplicationsPrefixes:
 						print(str(route) + ' ')
 					for route in ActiveImptApplicationsPrefixes:
-						r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+						r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 						sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 						print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1
@@ -107,7 +108,7 @@ def add_more_specific_routes():
 					for route in ActiveImptApplicationsPrefixes:
 						print(str(route) + ' ')
 					for route in ActiveImptApplicationsPrefixes:
-						r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+						r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 						sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 						print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1	
@@ -118,7 +119,7 @@ def add_more_specific_routes():
 						if route not in ActiveImptApplicationsPrefixesOld:
 							print(str(route) +' ')
 						if route not in ActiveImptApplicationsPrefixesOld:
-							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+							r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 							print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1
@@ -129,7 +130,7 @@ def add_more_specific_routes():
 						if route not in ActiveImptApplicationsPrefixes:
 							print(str(route) +' ')
 						if route not in ActiveImptApplicationsPrefixes:
-							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]')})
+							r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]')})
 							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 							print('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]')
 						v += 1
@@ -138,9 +139,9 @@ def add_more_specific_routes():
 					print("Advertising the following newly learned Important Applications' routes from Egress ASBR's: ")
 					for route in ActiveImptApplicationsPrefixes:
 						if route not in ActiveImptApplicationsPrefixesOld:
-							print(str(route) +'\n')
+							print(str(route) +' ')
 						if route not in ActiveImptApplicationsPrefixesOld:
-							r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
+							r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')})
 							sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 							print('announce route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' [' + str(labelmap[ImptApplicationsConfiguredPeerList['peer_address'+ str(i)]]) + ']')
 						v += 1
@@ -171,7 +172,7 @@ def add_more_specific_routes():
 				print('\n========================================================================================\n\n		All defined EPE Peers For Important Applications Are Idle.\n			Lets just remove the EPE Routes\n\n')
 				v = 0
 				for route in ActiveImptApplicationsPrefixes:
-					r = requests.post('http://10.164.1.177:5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]')})
+					r = requests.post('http://' + str(controller_ip) + ':5000', files={'command': (None, 'withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]')})
 					sleep(.2) # Give the API time to process - avoid the HTTP socket error(Max Retries exceeded with url)
 					print('withdraw route ' + str(route) +' next-hop '+ str(PeerToASBRMap[str(ImptApplicationsConfiguredPeerList['peer_address'+ str(i)])][0])+' label [800000]')
 					v += 1	
@@ -185,9 +186,17 @@ def add_more_specific_routes():
 				loadconfiguredEPEPeers()
 				FindActiveServicePrefixes()
 
+# Get the controller IP from the TopologyVariable YAML FIle
 
-
-
+def GetControllerIP():
+	script_dir = os.path.dirname(__file__)
+	rel_path = "TopologyVariables.yaml"
+	abs_file_path = os.path.join(script_dir, rel_path)
+	file=open(abs_file_path)
+	topo_vars = yaml.load(file.read())
+	file.close()
+	controller_ip = topo_vars['exabgp']['ip_address']
+	return controller_ip
 
 # Find the routes in Important Applications file that are actually active in a service prefix supernet
 	
@@ -197,16 +206,16 @@ def FindActiveServicePrefixes():
 	global serviceroutes
 	servicerouteslist = [y for x in serviceroutes.values() for y in x]
 	script_dir = os.path.dirname(__file__)
-	rel_path = "ImptApplicationsPrefixes"
+	rel_path = "RuntimeVariables.yaml"
 	abs_file_path = os.path.join(script_dir, rel_path)
 	f = open(abs_file_path,'r')
-	ImptApplicationsPrefixes = [line.strip() for line in f]		
+	RuntimeVariables = yaml.load(f.read())
+	ImptApplicationsPrefixes = RuntimeVariables['ImptApplicationsPrefixes']	
 	ImptApplicationsIPSet = IPSet(ImptApplicationsPrefixes)
 	ImptApplicationsIPNetwork = list(ImptApplicationsIPSet.iter_cidrs())
 	serviceIPSet = IPSet(servicerouteslist)
 	serviceIPNetwork = list(serviceIPSet.iter_cidrs())
 	ActiveImptApplicationsPrefixesOld = copy.deepcopy(ActiveImptApplicationsPrefixes)
-	f.close()
 	
 	# Result Stored in 	ActiveimportantPrefixes
 	
@@ -218,7 +227,6 @@ def FindActiveServicePrefixes():
 		else:	
 			pass
 		v +=1	
-
 
 
 def loadconfiguredEPEPeers():
@@ -371,7 +379,7 @@ def main():
 		sleep(1)
 		exit(0)
 	else:
-		print("\n\n\nCome on!!! 1,2,3 or q only.......:  \n\n")
+		print("\n\n\nCome on!!! 1 or q only.......:  \n\n")
 		sleep(1)
 		main()
 	script_dir = os.path.dirname(__file__)

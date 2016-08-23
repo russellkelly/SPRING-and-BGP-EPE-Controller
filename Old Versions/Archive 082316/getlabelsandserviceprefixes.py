@@ -19,12 +19,10 @@ def follow(thefile):
 		
 
 def main():
-	fl = open('PeerToLabelMapping','w')
-	fa = open('PeerToASBRMapping','w')
+	f = open('PeerToLabelMapping','w')
 	g = open('ServicePrefixes','w')
 	h = open('bgplog.json','w')
-	fl.close()
-	fa.close()
+	f.close()
 	g.close()
 	h.close()
 	logfile = open('bgplog.json')        
