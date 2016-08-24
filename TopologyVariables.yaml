@@ -5,8 +5,6 @@
 # the Egress ASBRs, the EPE routers, the ingress routers (those the controller
 # sends the labeled routes to), and the local AS
 
-home_directory: /home/rbutme
-
 egress_peering_routers:
   ip_address:
       - 10.164.2.58
