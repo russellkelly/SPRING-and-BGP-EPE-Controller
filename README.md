@@ -147,20 +147,20 @@ VeryImportantApplications.py
           the VeryImptApplicationsPrefixes section of the RuntimeVariables YAML
           file and advertising them if, and only if, the supernet of the prefixi
           exists in ServicePrefixes (the file getlabelsandserviceprefixes.py
-            creates dynamically from the received routes from the peering
-            routers).  An important difference here is the ability of the
-            script to advertise the subnet within the supernet along with a
-            user-provisioned SPRING label stack.  The label stack is configured
-            in the section "VeryImportantApplicationsSRPaths" of the
-            RuntimeVariables YAML file.  This path is updated depending on what
-            egress ASBR EPE label being used.  That is; if and EPE label from
-            ASBR1 is being used (due to the priority configured by the user
-              when first running VeryImportantApplications.py), then SRPATH1
-              will be used.  If the EPE peer being used moves to say ASBR2, then
-              the SRPATH2 will be used.  The SRPATHs can be updated on the fly
-              in the section "VeryImportantApplicationsSRPaths" of the
-              RuntimeVariables YAML file, and the python program will pick up
-              the new path.
+          creates dynamically from the received routes from the peering
+          routers).  An important difference here is the ability of the
+          script to advertise the subnet within the supernet along with a
+          user-provisioned SPRING label stack.  The label stack is configured
+          in the section "VeryImportantApplicationsSRPaths" of the
+          RuntimeVariables YAML file.  This path is updated depending on what
+          egress ASBR EPE label being used.  That is; if and EPE label from
+          ASBR1 is being used (due to the priority configured by the user
+          when first running VeryImportantApplications.py), then SRPATH1
+          will be used.  If the EPE peer being used moves to say ASBR2, then
+          the SRPATH2 will be used.  The SRPATHs can be updated on the fly
+          in the section "VeryImportantApplicationsSRPaths" of the
+          RuntimeVariables YAML file, and the python program will pick up
+          the new path.
 
 
 
